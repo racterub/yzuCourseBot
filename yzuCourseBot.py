@@ -1,7 +1,6 @@
 '''
     Date  : 2019/09
-    Author: Doem
-    E-mail: aa0917954358@gmail.com
+    Author: Doem (aa0917954358@gmail.com), Racterub (racterub@gmail.com)
 '''
 
 import cv2
@@ -13,10 +12,11 @@ from bs4 import BeautifulSoup
 from keras.models import load_model
 
 class CourseBot:
-    def __init__(self, account, password):
+    def __init__(self, account, password, deptid):
         self.account = account
         self.password = password
         self.coursesDB = {}
+        self.deptid = deptid
 
         # for keras
         self.model = load_model('model.h5')
@@ -58,7 +58,6 @@ class CourseBot:
 
     # login into system and get session
     def login(self):
-        
         while True:
             # clear Session object
             self.session.cookies.clear()
@@ -71,7 +70,6 @@ class CourseBot:
 
             # get login data
             loginHtml = self.session.get(self.loginUrl)
-            
             # check if system is open
             if '選課系統尚未開放!' in loginHtml.text:
                 self.log('選課系統尚未開放!')
@@ -95,7 +93,7 @@ class CourseBot:
 
     def getCourseDB(self):
 
-        for dept in ['304', '724', '901']: # 304-資工 724-資工碩 901-通識
+        for dept in self.deptid:
             # use BeautifulSoup to parse html
             html = self.session.get(self.courseListUrl)
             parser = BeautifulSoup(html.text, 'lxml')
@@ -159,7 +157,7 @@ class CourseBot:
                     'Hid_SchTime': '',
                     'DPL_DeptName': dept,
                     'DPL_Degree': '6',
-                    self.coursesDB[key]['mUrl'] + '.x': '0', 
+                    self.coursesDB[key]['mUrl'] + '.x': '0',
                     self.coursesDB[key]['mUrl'] + '.y': '0'
                 }
                 self.session.post(self.courseListUrl, data= selectPayLoad)
@@ -189,12 +187,14 @@ if __name__ == '__main__':
 
     # the courses you want to select, format: '`deptId`,`courseId``classId`'
     coursesList = [
-        '304,CS352A', 
-        '901,LS239A', 
+        '304,CS352A',
+        '901,LS239A',
         '304,CS354A'
     ]
 
-    myBot = CourseBot(Account, Password)
+    deptid = [i.split(',')[0] for i in courseList]
+
+    myBot = CourseBot(Account, Password, deptid)
     myBot.login()
     myBot.getCourseDB()
     myBot.selectCourses(coursesList)
